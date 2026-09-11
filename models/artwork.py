@@ -34,3 +34,4 @@ class Artwork(BaseModel):
     constituents: list[Constituent] = []
     measurements: list[Measurement] = []
     tags: list[Tag] = []
+

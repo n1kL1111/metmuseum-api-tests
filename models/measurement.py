@@ -9,3 +9,4 @@ class Measurement(BaseModel):
     elementName: str
     elementDescription: Optional[str] = None
     elementMeasurements: dict[str, float]
+
