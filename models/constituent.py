@@ -12,3 +12,4 @@ class Constituent(BaseModel):
     constituentULAN_URL: Optional[HttpUrl] = None
     constituentWikidata_URL: Optional[HttpUrl] = None
     gender: Optional[str] = None
+

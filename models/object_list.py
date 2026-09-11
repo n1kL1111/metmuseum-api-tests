@@ -6,3 +6,4 @@ class ObjectList(BaseModel):
 
     total: int
     objectIDs: list[int]
+

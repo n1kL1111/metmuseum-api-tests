@@ -9,3 +9,4 @@ class Tag(BaseModel):
     term: str
     AAT_URL: Optional[HttpUrl] = None
     Wikidata_URL: Optional[HttpUrl] = None
+
