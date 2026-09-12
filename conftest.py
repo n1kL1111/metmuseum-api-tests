@@ -2,7 +2,7 @@ import pytest
 import requests
 
 from api import ApiClient, DepartmentsApi, ObjectsApi, SearchApi
-from utils.test_metadata import TEST_METADATA, FILE_NAMES
+from utils.test_metadata import TEST_METADATA
 
 
 @pytest.fixture
@@ -44,15 +44,5 @@ def pytest_collection_modifyitems(items):
             item.add_marker(
                 pytest.mark.allure_description(
                     metadata["description"]
-                )
-            )
-
-        suite_name = FILE_NAMES.get(item.path.name)
-
-        if suite_name:
-            item.add_marker(
-                pytest.mark.allure_label(
-                    suite_name,
-                    label_type="suite",
                 )
             )
