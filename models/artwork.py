@@ -1,9 +1,5 @@
 from pydantic import BaseModel, ConfigDict
 
-from .constituent import Constituent
-from .measurement import Measurement
-from .tag import Tag
-
 
 class Artwork(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -28,7 +24,3 @@ class Artwork(BaseModel):
 
     primaryImage: str
     objectURL: str
-
-    constituents: list[Constituent]
-    measurements: list[Measurement] | None
-    tags: list[Tag] | None
