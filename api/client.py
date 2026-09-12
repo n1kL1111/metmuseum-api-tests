@@ -1,9 +1,9 @@
 import logging
 
+import allure
 import requests
 
-from utils.allure_helpers import attach_response
-
+from utils.allure_helpers import attach_response, attach_request
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ApiClient:
         *,
         version: str = "v1",
         params: dict | None = None,
-    ):
+    ) -> requests.Response:
         url = f"{self.BASE_URL}/{version}/{endpoint}"
 
         logger.info("GET %s", url)
@@ -28,12 +28,22 @@ class ApiClient:
         if params:
             logger.info("Query params: %s", params)
 
-        try:
-            response = self.session.get(
-                url,
+        with allure.step(f"GET {endpoint}"):
+            attach_request(
+                method="GET",
+                url=url,
                 params=params,
-                timeout=10,
             )
+
+            try:
+                response = self.session.get(
+                    url,
+                    params=params,
+                    timeout=10,
+                )
+            except requests.RequestException:
+                logger.exception("Request failed: %s", url)
+                raise
 
             logger.info(
                 "Response: %s %s",
@@ -46,7 +56,3 @@ class ApiClient:
             attach_response(response)
 
             return response
-
-        except requests.RequestException:
-            logger.exception("Request failed: %s", url)
-            raise
