@@ -128,3 +128,39 @@ def test_search_offset(search_api):
         assert second.objectIDs
         assert first.objectIDs != second.objectIDs
 
+    assert result.objectIDs
+    assert len(result.objectIDs) <= 5
+
+def test_search_empty_query(search_api):
+    response = search_api.search("")
+
+    assert response.status_code == 200
+
+    result = ObjectList.model_validate(response.json())
+
+    assert isinstance(result.total, int)
+    assert isinstance(result.objectIDs, list)
+
+def test_search_offset(search_api):
+    first_response = search_api.search(
+        "cats",
+        offset=0,
+        limit=5,
+    )
+
+    second_response = search_api.search(
+        "cats",
+        offset=5,
+        limit=5,
+    )
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+
+    first = ObjectList.model_validate(first_response.json())
+    second = ObjectList.model_validate(second_response.json())
+
+    assert first.objectIDs
+    assert second.objectIDs
+    assert first.objectIDs != second.objectIDs
+
