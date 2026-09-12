@@ -1,4 +1,3 @@
-import allure
 from requests import Response
 
 from .client import ApiClient
@@ -8,7 +7,6 @@ class SearchApi:
     def __init__(self, client: ApiClient):
         self.client = client
 
-    @allure.step("Выполнить поиск: {query}")
     def search(
         self,
         query: str,
