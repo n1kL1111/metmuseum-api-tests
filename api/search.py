@@ -1,3 +1,4 @@
+import allure
 from requests import Response
 
 from .client import ApiClient
@@ -7,6 +8,7 @@ class SearchApi:
     def __init__(self, client: ApiClient):
         self.client = client
 
+    @allure.step("Выполнить поиск: {query}")
     def search(
         self,
         query: str,
@@ -19,7 +21,6 @@ class SearchApi:
         department_id: int | None = None,
         has_images: bool | None = None,
     ) -> Response:
-
         params = {
             "q": query,
             "offset": offset,

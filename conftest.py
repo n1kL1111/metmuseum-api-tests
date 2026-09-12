@@ -1,8 +1,8 @@
+import allure
 import pytest
 import requests
 
 from api import ApiClient, DepartmentsApi, ObjectsApi, SearchApi
-
 
 @pytest.fixture
 def session():

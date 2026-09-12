@@ -2,6 +2,8 @@ import logging
 
 import requests
 
+from utils.allure_helpers import attach_response
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,8 @@ class ApiClient:
             )
 
             logger.debug("Response body: %s", response.text)
+
+            attach_response(response)
 
             return response
 
