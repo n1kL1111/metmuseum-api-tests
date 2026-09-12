@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
 
@@ -9,7 +7,7 @@ class Constituent(BaseModel):
     constituentID: int
     role: str
     name: str
-    constituentULAN_URL: Optional[HttpUrl] = None
-    constituentWikidata_URL: Optional[HttpUrl] = None
-    gender: Optional[str] = None
+    constituentULAN_URL: str
+    constituentWikidata_URL: str
+    gender: str
 
