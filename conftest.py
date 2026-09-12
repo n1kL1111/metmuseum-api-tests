@@ -29,4 +29,3 @@ def search_api(client):
 @pytest.fixture
 def departments_api(client):
     return DepartmentsApi(client)
-

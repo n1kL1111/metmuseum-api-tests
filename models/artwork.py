@@ -1,6 +1,4 @@
-from typing import Optional
-
-from pydantic import BaseModel, ConfigDict, HttpUrl
+from pydantic import BaseModel, ConfigDict
 
 from .constituent import Constituent
 from .measurement import Measurement
@@ -28,10 +26,9 @@ class Artwork(BaseModel):
     isHighlight: bool
     isPublicDomain: bool
 
-    primaryImage: Optional[HttpUrl] = None
-    objectURL: Optional[HttpUrl] = None
+    primaryImage: str
+    objectURL: str
 
-    constituents: list[Constituent] = []
-    measurements: list[Measurement] = []
-    tags: list[Tag] = []
-
+    constituents: list[Constituent]
+    measurements: list[Measurement] | None
+    tags: list[Tag] | None
