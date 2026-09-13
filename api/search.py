@@ -4,13 +4,12 @@ from .client import ApiClient
 
 
 class SearchApi:
-    def __init__(self, client: ApiClient):
+    def __init__(self, client: ApiClient) -> None:
         self.client = client
 
     def search(
         self,
         query: str,
-        *,
         offset: int | None = None,
         limit: int | None = None,
         is_highlight: bool | None = None,
