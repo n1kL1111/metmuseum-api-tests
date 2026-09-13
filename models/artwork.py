@@ -1,26 +1,30 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Artwork(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(
+        extra="ignore",
+        populate_by_name=True,
+    )
 
-    objectID: int
+    object_id: int = Field(alias="objectID")
     title: str
     department: str
-    objectName: str
+    object_name: str = Field(alias="objectName")
 
-    artistDisplayName: str
-    artistDisplayBio: str
+    artist_display_name: str = Field(alias="artistDisplayName")
+    artist_display_bio: str = Field(alias="artistDisplayBio")
 
-    objectDate: str
-    objectBeginDate: int
-    objectEndDate: int
+    object_date: str = Field(alias="objectDate")
+    object_begin_date: int = Field(alias="objectBeginDate")
+    object_end_date: int = Field(alias="objectEndDate")
 
     medium: str
     dimensions: str
 
-    isHighlight: bool
-    isPublicDomain: bool
+    is_highlight: bool = Field(alias="isHighlight")
+    is_public_domain: bool = Field(alias="isPublicDomain")
 
-    primaryImage: str
-    objectURL: str
+    primary_image: str = Field(alias="primaryImage")
+    object_url: str = Field(alias="objectURL")
+
