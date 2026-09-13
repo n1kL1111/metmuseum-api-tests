@@ -1,5 +1,6 @@
 import pytest
 import requests
+from requests import Session
 
 from api import ApiClient, DepartmentsApi, ObjectsApi, SearchApi
 from utils.test_metadata import TEST_METADATA
