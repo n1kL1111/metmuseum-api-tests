@@ -4,7 +4,7 @@ from .client import ApiClient
 
 
 class ObjectsApi:
-    def __init__(self, client: ApiClient):
+    def __init__(self, client: ApiClient) -> None:
         self.client = client
 
     def get_object(self, object_id: int) -> Response:
