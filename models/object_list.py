@@ -8,4 +8,4 @@ class ObjectList(BaseModel):
     )
 
     total: int
-    object_ids: list[int] = Field(alias="objectIDs")
+    object_ids: list[int]= Field(alias="objectIDs")

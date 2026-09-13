@@ -1,7 +1,8 @@
+from api import ObjectsApi
 from models import Artwork, ObjectList
 
 
-def test_get_artwork(objects_api) -> None:
+def test_get_artwork(objects_api: ObjectsApi) -> None:
     response = objects_api.get_object(436535)
 
     assert response.status_code == 200, "Unexpected status code"
@@ -13,13 +14,13 @@ def test_get_artwork(objects_api) -> None:
     assert artwork.department == "European Paintings", "Unexpected department"
 
 
-def test_get_nonexistent_artwork(objects_api) -> None:
+def test_get_nonexistent_artwork(objects_api: ObjectsApi) -> None:
     response = objects_api.get_object(999999999)
 
     assert response.status_code == 404, "Expected 404 for invalid ID"
 
 
-def test_get_objects(objects_api) -> None:
+def test_get_objects(objects_api: ObjectsApi) -> None:
     response = objects_api.get_objects()
     assert response.status_code == 200, "Unexpected status code"
 

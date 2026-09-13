@@ -36,7 +36,7 @@ class SearchApi:
         }
 
         return self.client.get(
-            "search",
+            endpoint="search",
             version="v1.1",
             params=params,
         )
