@@ -11,13 +11,12 @@ logger = logging.getLogger(__name__)
 class ApiClient:
     BASE_URL = "https://collectionapi.metmuseum.org/public/collection"
 
-    def __init__(self, session: requests.Session):
+    def __init__(self, session: requests.Session) -> None:
         self.session = session
 
     def get(
         self,
         endpoint: str,
-        *,
         version: str = "v1",
         params: dict | None = None,
     ) -> requests.Response:

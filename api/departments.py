@@ -4,7 +4,7 @@ from .client import ApiClient
 
 
 class DepartmentsApi:
-    def __init__(self, client: ApiClient):
+    def __init__(self, client: ApiClient) -> None:
         self.client = client
 
     def get_departments(self) -> Response:

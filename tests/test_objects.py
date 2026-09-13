@@ -1,32 +1,29 @@
-from models import Artwork
+from api import ObjectsApi
+from models import Artwork, ObjectList
 
 
-def test_get_artwork(objects_api):
+def test_get_artwork(objects_api: ObjectsApi) -> None:
     response = objects_api.get_object(436535)
 
-    assert response.status_code == 200
+    assert response.status_code == 200, "Unexpected status code"
 
     artwork = Artwork.model_validate(response.json())
 
-    assert artwork.objectID == 436535
-    assert artwork.title
-    assert artwork.department
+    assert artwork.object_id == 436535, "Unexpected object ID"
+    assert artwork.title == "Wheat Field with Cypresses", "Unexpected title"
+    assert artwork.department == "European Paintings", "Unexpected department"
 
 
-def test_get_nonexistent_artwork(objects_api):
+def test_get_nonexistent_artwork(objects_api: ObjectsApi) -> None:
     response = objects_api.get_object(999999999)
 
-    assert response.status_code == 404
+    assert response.status_code == 404, "Expected 404 for invalid ID"
 
 
-def test_get_objects(objects_api):
+def test_get_objects(objects_api: ObjectsApi) -> None:
     response = objects_api.get_objects()
+    assert response.status_code == 200, "Unexpected status code"
 
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert "total" in data
-    assert "objectIDs" in data
-    assert isinstance(data["total"], int)
-    assert isinstance(data["objectIDs"], list)
+    result = ObjectList.model_validate(response.json())
+    assert result.total == 502726, "Unexpected total"
+    assert result.object_ids, "Object IDs list is empty"

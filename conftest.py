@@ -15,22 +15,22 @@ def session():
 
 
 @pytest.fixture
-def client(session):
+def client(session: requests.Session) -> ApiClient:
     return ApiClient(session)
 
 
 @pytest.fixture
-def objects_api(client):
+def objects_api(client: ApiClient) -> ObjectsApi:
     return ObjectsApi(client)
 
 
 @pytest.fixture
-def search_api(client):
+def search_api(client: ApiClient) -> SearchApi:
     return SearchApi(client)
 
 
 @pytest.fixture
-def departments_api(client):
+def departments_api(client: ApiClient) -> DepartmentsApi:
     return DepartmentsApi(client)
 
 
