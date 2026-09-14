@@ -51,8 +51,9 @@ metmuseum-api-tests/
 │   └── __init__.py
 │
 ├── tests/
-│   ├── test_objects.py    # Тесты Objects API
-│   └── test_search.py     # Тесты Search API
+│   ├── test_departments.py # Тесты Departments API
+│   ├── test_objects.py     # Тесты Objects API
+│   └── test_search.py      # Тесты Search API
 │
 ├── utils/
 │   ├── allure_helpers.py  # Вспомогательные функции Allure
