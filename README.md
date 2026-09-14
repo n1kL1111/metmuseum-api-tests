@@ -2,8 +2,6 @@
 
 Автоматизированное тестирование **The Metropolitan Museum of Art Collection API** с использованием Python.
 
-Проект демонстрирует подход к автоматизации REST API: API-клиенты, Pydantic-модели, параметризованные тесты, логирование и Allure Report.
-
 ---
 
 ## Покрытие API
@@ -114,7 +112,7 @@ cd metmuseum-api-tests
 python -m venv .venv
 ```
 
-Активировать его в Windows:
+Активировать его:
 
 ```powershell
 .venv\Scripts\Activate.ps1
