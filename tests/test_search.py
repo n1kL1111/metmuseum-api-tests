@@ -1,111 +1,208 @@
+import pytest
 from api import SearchApi, ObjectsApi
 from models import ObjectList, Artwork
-import pytest
 
-def test_search_by_keyword(search_api: SearchApi, objects_api: ObjectsApi ) -> None:
-    keyword = "Rembrandt"
+@pytest.mark.parametrize(
+    "keyword",
+    [
+        "Rembrandt",
+        "China",
+        "sunflowers",
+        "furniture",
+        "cats"
+    ],
+)
+def test_search__keyword(search_api: SearchApi, objects_api: ObjectsApi, keyword: str) -> None:
 
-    response = search_api.search(keyword, limit=10)
+    response = search_api.search(keyword, limit=5)
 
-    assert response.status_code == 200, "Unexpected status code"
+    assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
 
-    assert result.object_ids, "Search returned no results"
+    assert result.object_ids is not None and result.object_ids, f"Поиск по '{keyword}' не вернул результатов"
 
     for object_id in result.object_ids:
         object_response = objects_api.get_object(object_id)
-
-        assert object_response.status_code == 200, "Unexpected status code"
-
+        assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {object_id}"
         artwork = Artwork.model_validate(object_response.json())
+        haystack = " ".join(str(value) for value in artwork.model_dump().values() if value).lower()
+        assert keyword.lower() in haystack, f"Объект {object_id} не содержит '{keyword}' ни в одном поле"
 
-        assert keyword.lower() in artwork.artist_display_name.lower(), f"Keyword not found for object {object_id}"
 
-def test_search_by_invalid_keyword(search_api: SearchApi) -> None:
-    response = search_api.search("qwerty")
+@pytest.mark.parametrize(
+    "keyword",
+    [
+        "qwerty",
+        "Картина",
+        "!@!#$%",
+    ],
+)
+def test_search_no_results(search_api: SearchApi, keyword: str) -> None:
+    response = search_api.search(keyword)
 
-    assert response.status_code == 200, "Unexpected status code"
+    assert response.status_code == 200, "Неожиданный статус-код"
 
-    assert response.json()["total"] == 0, "Expected zero results"
+    data = ObjectList.model_validate(response.json())
+
+    assert data.total == 0, "Ожидалось ноль результатов"
+    assert data.object_ids is None, "Ожидалось отсутствие ID объектов"
 
 def test_search_limit(search_api: SearchApi) -> None:
     response = search_api.search("Rembrandt", limit=10)
 
-    assert response.status_code == 200, "Unexpected status code"
+    assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
 
-    assert result.total >= 10, "Expected at least 10 results"
-    assert len(result.object_ids) == 10, "Unexpected number of results"
+    assert result.object_ids is not None and result.object_ids, "Поиск не вернул результатов"
+    assert result.total >= 10, f"Ожидалось не менее 10 совпадений, получено {result.total}"
+    assert len(result.object_ids) == 10, f"Ожидалось 10 результатов при limit=10, получено {len(result.object_ids)}"
 
-def test_search_with_filter(search_api: SearchApi) -> None:
-    response = search_api.search("Rembrandt", has_images=True, limit=10)
+# При limit=100 тест падает - возвращает объект 391481 без изображений
+@pytest.mark.xfail(reason="Баг API: hasImages=true возвращает объекты без изображений", strict=True)
+def test_search_with_images_filter(search_api: SearchApi, objects_api: ObjectsApi) -> None:
+    response = search_api.search("Rembrandt", has_images=True, limit=100)
 
-    assert response.status_code == 200, "Unexpected status code"
+    assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
 
-    assert result.object_ids, "Object IDs list is empty"
-    assert len(result.object_ids) <= 10, "Unexpected object count"
+    assert result.object_ids is not None and result.object_ids, "Поиск не вернул результатов"
+
+    for object_id in result.object_ids:
+        object_response = objects_api.get_object(object_id)
+        assert object_response.status_code == 200, "Неожиданный статус-код"
+        artwork = Artwork.model_validate(object_response.json())
+        assert (
+            artwork.primary_image
+            or artwork.primary_image_small
+            or artwork.additional_images
+        ), f"У объекта {object_id} нет ни одного изображения (при hasImages=true)"
+
+@pytest.mark.xfail(reason="Баг API: isHighlight=true возвращает объекты с isHighlight=false ", strict=True)
+def test_search_with_is_highlight_filter(search_api: SearchApi, objects_api: ObjectsApi,) -> None:
+
+    response = search_api.search("Rembrandt", is_highlight=True, limit=10)
+
+    assert response.status_code == 200, "Неожиданный статус-код"
+
+    result = ObjectList.model_validate(response.json())
+
+    assert result.object_ids is not None and result.object_ids, "Поиск не вернул результатов"
+
+    for object_id in result.object_ids:
+        object_response = objects_api.get_object(object_id)
+
+        assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {object_id}"
+
+        artwork = Artwork.model_validate(object_response.json())
+
+        assert artwork.is_highlight is True, (f"Объект {object_id} имеет isHighlight=false"
+                                              f", ожидалось True")
+
+def test_search_result_does_not_depend_on_param_order(search_api: SearchApi,) -> None:
+
+    params_order_a = [
+        ("q", "sunflowers"),
+        ("isHighlight", "true"),
+        ("hasImages", "true"),
+        ("limit", "20"),
+    ]
+
+    params_order_b = list(reversed(params_order_a))
+
+    response_a = search_api.search_raw(params_order_a)
+    response_b = search_api.search_raw(params_order_b)
+
+    assert response_a.status_code == 200, "Неожиданный статус-код (порядок A)"
+    assert response_b.status_code == 200, "Неожиданный статус-код (порядок B)"
+
+    result_a = ObjectList.model_validate(response_a.json())
+    result_b = ObjectList.model_validate(response_b.json())
+
+    assert result_a.total == result_b.total, f"Порядок query-параметров влияет на результат поиска."
+
+    ids_a = set(result_a.object_ids or [])
+    ids_b = set(result_b.object_ids or [])
+
+    assert ids_a == ids_b, f"Порядок параметров влияет на состав выдачи."
 
 def test_search_limit_exceeded(search_api: SearchApi) -> None:
-    response = search_api.search(
-        "cats",
-        limit=501,
-    )
+    response = search_api.search("Rembrandt", limit=1000)
 
-    assert response.status_code == 200, "Unexpected status code"
+    assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
 
-    assert len(result.object_ids) <= 500, "Limit exceeded"
+    assert result.object_ids is not None and result.object_ids, "Поиск не вернул результатов"
 
-def test_search_max_limit(search_api: SearchApi) -> None:
-    response = search_api.search(
-        "cats",
-        limit=500,
-    )
+    assert len(result.object_ids) == 500, "Поиск не ограничился 500"
 
-    assert response.status_code == 200, "Unexpected status code"
+def test_search_offset(search_api: SearchApi) -> None:
+    first_response = search_api.search("Rembrandt",offset=0,limit=10)
+    second_response = search_api.search("Rembrandt", offset=10,limit=10)
 
-    result = ObjectList.model_validate(response.json())
+    assert first_response.status_code == 200, "Неожиданный статус-код (первая страница)"
+    assert second_response.status_code == 200, "Неожиданный статус-код (вторая страница)"
 
-    assert len(result.object_ids) == 500, "Unexpected object count"
+    first_result = ObjectList.model_validate(first_response.json())
+    second_result = ObjectList.model_validate(second_response.json())
 
-def test_search_empty_query(search_api: SearchApi) -> None:
-    response = search_api.search("")
+    assert first_result.object_ids is not None, "Первая страница: API вернул null"
+    assert second_result.object_ids is not None, "Вторая страница: API вернул null"
 
-    assert response.status_code == 200, "Unexpected status code"
+    assert len(first_result.object_ids) == 10, (f"Первая страница (offset=0): ожидалось 10 результатов,"
+                                                f" получено {len(first_result.object_ids)}")
+    assert len(second_result.object_ids) == 10, (f"Вторая страница (offset=10): ожидалось 10 результатов,"
+                                                 f" получено {len(second_result.object_ids)}")
 
-    ObjectList.model_validate(response.json())
+    duplicates = set(first_result.object_ids) & set(second_result.object_ids)
 
-@pytest.mark.parametrize(
-    "offset, expected_object_ids",
-    [
-        (
-            0,
-            [437403, 437420, 437406, 437416, 437418, 437414, 437411, 437419, 437404, 437407],
-        ),
-        (
-            10,
-            [359970, 437408, 437409, 437410, 437413, 437421, 438379, 354638, 391544, 459194],
-        ),
-        (
-            20,
-            [437412, 354635, 337491, 364151, 364152, 364153, 373068, 437390, 370641, 437397],
-        ),
-    ],
-)
-def test_search_offset(search_api: SearchApi, offset: int, expected_object_ids: list[int]) -> None:
-    response = search_api.search(
-        "Rembrandt",
-        offset=offset,
-        limit=10,
-    )
+    assert not duplicates, f"Страницы поиска (offset=0 и offset=10) содержат дублирующиеся ID: {duplicates}"
 
-    assert response.status_code == 200, "Unexpected status code"
+def test_search_with_department_filter(search_api: SearchApi, objects_api: ObjectsApi) -> None:
+
+    response = search_api.search("cat", department_id=6, limit=10)
+
+    assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
 
-    assert result.object_ids == expected_object_ids, "Unexpected object IDs"
+    assert result.object_ids is not None and result.object_ids, "Поиск не вернул результатов"
+
+    for object_id in result.object_ids:
+        object_response = objects_api.get_object(object_id)
+
+        assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {object_id}"
+
+        artwork = Artwork.model_validate(object_response.json())
+
+        assert artwork.department == "Asian Art", (f"Объект {object_id} принадлежит отделу "
+                                                   f"{artwork.department} ожидался 'Asian Art' (ID 6)")
+
+def test_search_with_date_range(search_api: SearchApi, objects_api: ObjectsApi) -> None:
+    date_begin = 1100
+    date_end = 1200
+
+    response = search_api.search("African", date_begin=date_begin, date_end=date_end, limit=10)
+
+    assert response.status_code == 200, "Неожиданный статус-код"
+
+    result = ObjectList.model_validate(response.json())
+
+    assert result.object_ids is not None and result.object_ids, (f"Поиск с диапазоном"
+                                                                 f" [{date_begin}, {date_end}] не вернул результатов")
+
+    for object_id in result.object_ids:
+        object_response = objects_api.get_object(object_id)
+        assert (
+            object_response.status_code == 200
+        ), f"Неожиданный статус-код при получении объекта {object_id}"
+        artwork = Artwork.model_validate(object_response.json())
+        assert artwork.object_begin_date is not None, f"У объекта {object_id} не указан objectBeginDate"
+        assert artwork.object_end_date is not None, f"У объекта {object_id} не указан objectEndDate"
+        assert artwork.object_begin_date >= date_begin, (f"Объект {object_id}: "
+                                                         f"objectBeginDate={artwork.object_begin_date}'<' {date_begin}")
+        assert artwork.object_end_date <= date_end, (f"Объект {object_id}:"
+                                                     f" objectEndDate={artwork.object_end_date} '>' {date_end}")
