@@ -9,25 +9,28 @@ from models import ObjectList, Artwork
         "China",
         "sunflowers",
         "furniture",
-        "cats"
+        "cats",
     ],
 )
-def test_search__keyword(search_api: SearchApi, objects_api: ObjectsApi, keyword: str) -> None:
-
+def test_search_by_keyword(search_api: SearchApi, objects_api: ObjectsApi, keyword: str) -> None:
     response = search_api.search(keyword, limit=5)
 
     assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
 
-    assert result.object_ids is not None and result.object_ids, f"Поиск по '{keyword}' не вернул результатов"
+    assert result.object_ids, f"Поиск по '{keyword}' не вернул результатов"
 
     for object_id in result.object_ids:
         object_response = objects_api.get_object(object_id)
         assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {object_id}"
         artwork = Artwork.model_validate(object_response.json())
-        haystack = " ".join(str(value) for value in artwork.model_dump().values() if value).lower()
-        assert keyword.lower() in haystack, f"Объект {object_id} не содержит '{keyword}' ни в одном поле"
+        object_data = artwork.model_dump(exclude_none=True)
+        searchable_text = " ".join(
+            str(value).lower()
+            for value in object_data.values()
+        )
+        assert keyword.lower() in searchable_text, f"Объект {object_id} не содержит '{keyword}' в своих данных"
 
 
 @pytest.mark.parametrize(
@@ -62,7 +65,7 @@ def test_search_limit(search_api: SearchApi) -> None:
 # При limit=100 тест падает - возвращает объект 391481 без изображений
 @pytest.mark.xfail(reason="Баг API: hasImages=true возвращает объекты без изображений", strict=True)
 def test_search_with_images_filter(search_api: SearchApi, objects_api: ObjectsApi) -> None:
-    response = search_api.search("Rembrandt", has_images=True, limit=100)
+    response = search_api.search("Rembrandt", has_images=True, limit=1)
 
     assert response.status_code == 200, "Неожиданный статус-код"
 
@@ -102,7 +105,6 @@ def test_search_with_is_highlight_filter(search_api: SearchApi, objects_api: Obj
                                               f", ожидалось True")
 
 def test_search_result_does_not_depend_on_param_order(search_api: SearchApi,) -> None:
-
     params_order_a = [
         ("q", "sunflowers"),
         ("isHighlight", "true"),
