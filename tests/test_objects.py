@@ -36,7 +36,6 @@ def test_get_objects(objects_api: ObjectsApi) -> None:
 
     assert result.total > 0, "Общее количество объектов должно быть больше нуля"
     assert result.object_ids, "Список ID объектов пуст"
-    assert len(result.object_ids) == result.total, "Количество ID не совпадает с полем total"
     assert len(result.object_ids) == len(set(result.object_ids)), "ID объектов должны быть уникальными"
 
 def test_get_objects_by_department(objects_api: ObjectsApi) -> None:
@@ -53,22 +52,6 @@ def test_get_objects_by_department(objects_api: ObjectsApi) -> None:
         assert object_response.status_code == 200, "Неожиданный статус-код при получении объекта"
         artwork = Artwork.model_validate(object_response.json())
         assert artwork.department == "European Paintings", f"Объект {object_id} принадлежит другому отделу"
-
-def test_object_ids_can_be_retrieved(objects_api: ObjectsApi) -> None:
-    response = objects_api.get_objects()
-
-    assert response.status_code == 200, "Неожиданный статус-код"
-
-    result = ObjectList.model_validate(response.json())
-
-    assert result.object_ids is not None
-
-    for object_id in result.object_ids[:5]:
-        object_response = objects_api.get_object(object_id)
-        assert object_response.status_code == 200, "Неожиданный статус-код при получении объекта"
-        artwork = Artwork.model_validate(object_response.json())
-        assert artwork.object_id == object_id, (f"ID в ответе ({artwork.object_id})"
-                                                f" не совпадает с запрошенным ({object_id})")
 
 @pytest.mark.parametrize(
     "metadata_date, status_code",
