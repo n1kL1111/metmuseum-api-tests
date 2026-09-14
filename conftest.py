@@ -8,8 +8,17 @@ from utils.test_metadata import TEST_METADATA
 PARAMETER_NAMES = {
     "object_id": "ID",
     "keyword": "запрос",
+    "query": "запрос",
     "metadata_date": "дата",
     "status_code": "код",
+    "department_ids": "отдел",
+    "limit": "лимит",
+    "offset": "смещение",
+    "has_images": "изображения",
+    "is_highlight": "выделенное",
+    "department_id": "отдел",
+    "date_begin": "дата от",
+    "date_end": "дата до",
 }
 
 
@@ -52,7 +61,7 @@ def pytest_collection_modifyitems(items) -> None:
         title = metadata["title"]
 
         # Если тест параметризованный,
-        # добавляем шаблоны параметров в название
+        # добавляем значения параметров в название
         if hasattr(item, "callspec"):
             params = item.callspec.params
 
