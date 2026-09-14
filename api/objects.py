@@ -10,5 +10,19 @@ class ObjectsApi:
     def get_object(self, object_id: int) -> Response:
         return self.client.get(f"objects/{object_id}")
 
-    def get_objects(self) -> Response:
-        return self.client.get("objects")
+    def get_objects(
+        self,
+        department_ids: str | None = None,
+        metadata_date: str | None = None,
+    ) -> Response:
+        params = {
+            "departmentIds": department_ids,
+            "metadataDate": metadata_date,
+        }
+        params = {
+            key: value
+            for key, value in params.items()
+            if value is not None
+        }
+
+        return self.client.get("objects", params=params)

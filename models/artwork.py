@@ -38,3 +38,5 @@ class Artwork(BaseModel):
 
     primary_image: str = Field(alias="primaryImage")
     object_url: str = Field(alias="objectURL")
+
+    metadata_date: str = Field(alias="metadataDate")
