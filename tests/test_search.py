@@ -65,7 +65,7 @@ def test_search_limit(search_api: SearchApi) -> None:
 # При limit=100 тест падает - возвращает объект 391481 без изображений
 @pytest.mark.xfail(reason="Баг API: hasImages=true возвращает объекты без изображений", strict=True)
 def test_search_with_images_filter(search_api: SearchApi, objects_api: ObjectsApi) -> None:
-    response = search_api.search("Rembrandt", has_images=True, limit=1)
+    response = search_api.search("Rembrandt", has_images=True, limit=100)
 
     assert response.status_code == 200, "Неожиданный статус-код"
 
