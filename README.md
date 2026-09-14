@@ -1,64 +1,37 @@
 # 🏛️ Met Museum API Tests
 
-Автоматизированное тестирование **The Metropolitan Museum of Art Collection API** с использованием Python (Pytest, Pydantic).
+Автоматизированное тестирование **The Metropolitan Museum of Art Collection API** с использованием Python.
+
+Проект демонстрирует подход к автоматизации REST API: API-клиенты, Pydantic-модели, параметризованные тесты, логирование и Allure Report.
 
 ---
 
-## Что тестируем
+## Покрытие API
 
-В проекте автоматизированы проверки:
-
-* получение информации о произведении искусства;
-* обработка запроса с несуществующим ID;
-* получение списка произведений;
-* поиск произведений по ключевому слову;
-* ограничение количества результатов;
-* поиск с дополнительными параметрами;
-* обработка пустого поискового запроса;
-* пагинация результатов поиска.
-
-Ответы API дополнительно валидируются с помощью **Pydantic**.
+| API | Проверяемые сценарии |
+|---|---|
+| **Objects API** | Получение произведения по ID, обработка некорректного ID, получение объектов отдела, проверка принадлежности к отделу, валидация даты метаданных, фильтрация по дате |
+| **Search API** | Поиск по ключевому слову, отсутствие результатов, `limit`, `offset`, `hasImages`, `isHighlight`, фильтрация по отделу, диапазон дат, порядок query-параметров, превышение `limit` |
+| **Departments API** | Получение списка отделов, проверка уникальности ID и наличия названий |
 
 ---
 
-## Покрытие
+## Найденные проблемы API
 
-| Область | Проверка                                     | Тип      |
-| ------- | -------------------------------------------- | -------- |
-| Objects | Получение произведения по ID                 | Positive |
-| Objects | Запрос с несуществующим ID                   | Negative |
-| Objects | Получение списка произведений                | Positive |
-| Search  | Поиск по ключевому слову                     | Positive |
-| Search  | Ограничение количества результатов (`limit`) | Boundary |
-| Search  | Фильтр по наличию изображений                | Positive |
-| Search  | Пустой поисковый запрос                      | Boundary |
-| Search  | Пагинация (`offset`)                         | Boundary |
+В ходе тестирования были обнаружены две проблемы:
 
-**Всего: 8 API-тестов**
+- `hasImages=true` — API может возвращать произведения без изображений;
+- `isHighlight=true` — API может возвращать произведения с `isHighlight=false`.
+
+Оба случая зафиксированы отдельными тестами и отмечены как `xfail`, поскольку проблема находится на стороне API.
 
 ---
 
-### Основные компоненты
+## Allure Report
 
-* **`tests/`** — тестовые сценарии и проверки.
-* **`api/`** — API-клиенты для работы с отдельными ресурсами.
-* **`models/`** — Pydantic-модели для валидации ответов.
-* **`utils/`** — вспомогательные функции для Allure.
-* **`conftest.py`** — Pytest-фикстуры и настройка тестов.
+Пример отчёта:
 
-HTTP-запросы выполняются через общий `ApiClient`, что позволяет не дублировать код в отдельных API-классах.
-
----
-
-## Технологии
-
-* **Python 3**
-* **Pytest** — написание и запуск тестов
-* **Requests** — HTTP-запросы
-* **Pydantic** — валидация JSON-ответов
-* **Allure** — отчётность
-* **Logging** — техническое логирование
-* **Git** — контроль версий
+![Allure Report](docs/allure-overview.png)
 
 ---
 
@@ -68,32 +41,46 @@ HTTP-запросы выполняются через общий `ApiClient`, ч
 metmuseum-api-tests/
 │
 ├── api/
-│   ├── client.py
-│   ├── departments.py
-│   ├── objects.py
-│   └── search.py
+│   ├── client.py          # Общий HTTP-клиент
+│   ├── departments.py     # Departments API
+│   ├── objects.py         # Objects API
+│   └── search.py          # Search API
 │
 ├── models/
-│   ├── artwork.py
-│   └── object_list.py
+│   ├── artwork.py         # Модель произведения
+│   ├── department.py      # Модели отделов
+│   ├── object_list.py     # Модель списка объектов
+│   └── __init__.py
 │
 ├── tests/
-│   ├── test_objects.py
-│   └── test_search.py
+│   ├── test_objects.py    # Тесты Objects API
+│   └── test_search.py     # Тесты Search API
 │
 ├── utils/
-│   ├── allure_helpers.py
-│   └── test_metadata.py
+│   ├── allure_helpers.py  # Вспомогательные функции Allure
+│   └── test_metadata.py   # Названия и описания тестов
 │
-├── conftest.py
-├── pytest.ini
-├── requirements.txt
+├── conftest.py            # Фикстуры и настройки Pytest
+├── pytest.ini             # Конфигурация Pytest
+├── requirements.txt       # Зависимости проекта
 └── README.md
 ```
 
 ---
 
-##  Используемый API
+## Технологии
+
+- **Python 3**
+- **Pytest** — написание и запуск тестов
+- **Requests** — HTTP-запросы
+- **Pydantic** — валидация ответов API
+- **Allure Report** — отчётность
+- **Logging** — техническое логирование
+- **Git** — контроль версий
+
+---
+
+## Используемый API
 
 В проекте используется официальный **The Metropolitan Museum of Art Collection API**.
 
@@ -106,6 +93,10 @@ GET /public/collection/v1/departments
 GET /public/collection/v1.1/search
 ```
 
+Документация API:
+
+https://metmuseum.github.io/
+
 ---
 
 ## Установка
@@ -113,7 +104,7 @@ GET /public/collection/v1.1/search
 Клонировать репозиторий:
 
 ```bash
-git clone <URL_REPOSITORY>
+git clone https://github.com/n1kL1111/metmuseum-api-tests.git
 cd metmuseum-api-tests
 ```
 
@@ -123,7 +114,7 @@ cd metmuseum-api-tests
 python -m venv .venv
 ```
 
-Активировать его (Windows):
+Активировать его в Windows:
 
 ```powershell
 .venv\Scripts\Activate.ps1
@@ -145,33 +136,33 @@ pip install -r requirements.txt
 pytest
 ```
 
-Для запуска с сохранением результатов Allure:
+Запустить отдельный файл:
 
 ```bash
-pytest --alluredir=allure-results
+pytest tests/test_search.py
 ```
 
-Перед этим скачать Allure:
+Запустить конкретный тест:
 
 ```bash
-npm install -g allure
+pytest tests/test_search.py::test_search_limit
 ```
 
 ---
 
 ## Allure Report
 
-Для анализа результатов тестирования используется **Allure Report**.
+Для формирования результатов Allure:
 
-Запустить отчёт:
+```bash
+pytest --alluredir=allure-results
+```
+
+После выполнения тестов запустить отчёт:
 
 ```bash
 allure serve allure-results
 ```
-
-Пример отчёта:
-
-![Allure Overview](docs/allure-overview.png)
 
 ---
 
@@ -181,25 +172,17 @@ allure serve allure-results
 
 В лог записываются:
 
-* HTTP-метод;
-* URL запроса;
-* query-параметры;
-* статус ответа;
-* фактический URL;
-* ошибки выполнения запроса.
+- HTTP-метод;
+- URL запроса;
+- query-параметры;
+- статус ответа;
+- фактический URL;
+- ошибки выполнения запроса.
 
-Лог сохраняется в:
+Лог сохраняется в корне проекта:
 
 ```text
-logs/test.log
+test.log
 ```
 
 Основная информация также выводится в консоль при запуске Pytest.
-
----
-
-## Документация API
-
-Официальная документация:
-
-https://metmuseum.github.io/
