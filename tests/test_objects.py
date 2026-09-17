@@ -1,6 +1,7 @@
 import pytest
 from api import ObjectsApi
 from models import Artwork, ObjectList
+from datetime import date
 
 def test_get_artwork(objects_api: ObjectsApi) -> None:
     response = objects_api.get_object(436535)
@@ -76,20 +77,20 @@ def test_get_date_form(objects_api: ObjectsApi, metadata_date: str, status_code:
 
 def test_get_objects_by_metadata_date(objects_api: ObjectsApi) -> None:
     metadata_date = "2026-08-13"
+    requested = date.fromisoformat(metadata_date)
 
     response = objects_api.get_objects(metadata_date=metadata_date)
-
     assert response.status_code == 200, "Неожиданный статус-код"
 
     result = ObjectList.model_validate(response.json())
-
     assert result.object_ids, "Список ID объектов пуст"
 
     for object_id in result.object_ids[:5]:
         response = objects_api.get_object(object_id)
         assert response.status_code == 200, "Неожиданный статус-код при получении объекта"
         artwork = Artwork.model_validate(response.json())
-        assert artwork.metadata_date is not None, "Не указана дата"
-        actual_date = artwork.metadata_date[:10]
-        assert actual_date >= metadata_date, (f"Дата объекта {object_id} ({actual_date})"
-                                              f" раньше запрошенной ({metadata_date})")
+
+        actual = artwork.metadata_date.date()
+        assert actual >= requested, (
+            f"Дата объекта {object_id} ({actual}) раньше запрошенной ({requested})"
+        )
