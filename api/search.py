@@ -41,12 +41,6 @@ class SearchApi:
             "limit": limit,
         }
 
-        params = {
-            key: value
-            for key, value in params.items()
-            if value is not None
-        }
-
         return self.client.get(
             "search",
             version="v1.1",
