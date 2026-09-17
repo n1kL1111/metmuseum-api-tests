@@ -3,7 +3,7 @@ from api import SearchApi, ObjectsApi
 from models import ObjectList, Artwork
 
 @pytest.mark.parametrize(
-    ("keyword", "expected_object_id"),
+    ("keyword", "id"),
     [
         ("Rembrandt", 728386),
         ("China", 486633),
@@ -12,7 +12,7 @@ from models import ObjectList, Artwork
     ],
 )
 def test_search_by_keyword(search_api: SearchApi, objects_api: ObjectsApi,
-                           keyword: str, expected_object_id: int) -> None:
+                           keyword: str, id: int) -> None:
     search_response = search_api.search(keyword, limit=5, title=True)
 
     assert search_response.status_code == 200, "Неожиданный статус-код"
@@ -21,16 +21,16 @@ def test_search_by_keyword(search_api: SearchApi, objects_api: ObjectsApi,
 
     assert search_result.object_ids, f"Поиск по '{keyword}' не вернул результатов"
 
-    object_response = objects_api.get_object(expected_object_id)
+    object_response = objects_api.get_object(id)
 
-    assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {expected_object_id}"
+    assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {id}"
 
     artwork = Artwork.model_validate(object_response.json())
 
     assert keyword.lower() in artwork.title.lower(), (f"Ключевое слово '{keyword}'"
-                                                      f" отсутствует в названии объекта {expected_object_id}")
+                                                      f" отсутствует в названии объекта {id}")
 
-    assert expected_object_id in search_result.object_ids, (f"Ожидаемый объект {expected_object_id}"
+    assert id in search_result.object_ids, (f"Ожидаемый объект {id}"
                                                             f" отсутствует в результатах поиска по '{keyword}'")
 
 @pytest.mark.parametrize(
