@@ -62,7 +62,6 @@ def test_search_limit(search_api: SearchApi) -> None:
     assert result.total >= 10, f"Ожидалось не менее 10 совпадений, получено {result.total}"
     assert len(result.object_ids) == 10, f"Ожидалось 10 результатов при limit=10, получено {len(result.object_ids)}"
 
-# При limit=100 тест падает - возвращает объект 391481 без изображений
 @pytest.mark.xfail(reason="Баг API: hasImages=true возвращает объекты без изображений", strict=True)
 def test_search_with_images_filter(search_api: SearchApi, objects_api: ObjectsApi) -> None:
     response = search_api.search("Rembrandt", has_images=True, limit=100)
@@ -83,7 +82,6 @@ def test_search_with_images_filter(search_api: SearchApi, objects_api: ObjectsAp
             or artwork.additional_images
         ), f"У объекта {object_id} нет ни одного изображения (при hasImages=true)"
 
-@pytest.mark.xfail(reason="Баг API: isHighlight=true возвращает объекты с isHighlight=false ", strict=True)
 def test_search_with_is_highlight_filter(search_api: SearchApi, objects_api: ObjectsApi,) -> None:
 
     response = search_api.search("Rembrandt", is_highlight=True, limit=10)
