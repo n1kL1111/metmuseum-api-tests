@@ -3,35 +3,67 @@ from api import SearchApi, ObjectsApi
 from models import ObjectList, Artwork
 
 @pytest.mark.parametrize(
+    ("keyword", "expected_object_id"),
+    [
+        ("Rembrandt", 728386),
+        ("China", 486633),
+        ("sunflowers", 397949),
+        ("furniture", 347170),
+    ],
+)
+def test_search_by_keyword(search_api: SearchApi, objects_api: ObjectsApi,
+                           keyword: str, expected_object_id: int) -> None:
+    search_response = search_api.search(keyword, limit=5, title=True)
+
+    assert search_response.status_code == 200, "Неожиданный статус-код"
+
+    search_result = ObjectList.model_validate(search_response.json())
+
+    assert search_result.object_ids, f"Поиск по '{keyword}' не вернул результатов"
+
+    object_response = objects_api.get_object(expected_object_id)
+
+    assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {expected_object_id}"
+
+    artwork = Artwork.model_validate(object_response.json())
+
+    assert keyword.lower() in artwork.title.lower(), (f"Ключевое слово '{keyword}'"
+                                                      f" отсутствует в названии объекта {expected_object_id}")
+
+    assert expected_object_id in search_result.object_ids, (f"Ожидаемый объект {expected_object_id}"
+                                                            f" отсутствует в результатах поиска по '{keyword}'")
+
+@pytest.mark.parametrize(
     "keyword",
     [
         "Rembrandt",
-        "China",
-        "sunflowers",
-        "furniture",
-        "cats",
+        "Sunflowers",
+        "Cat",
+        "Japan",
     ],
 )
-def test_search_by_keyword(search_api: SearchApi, objects_api: ObjectsApi, keyword: str) -> None:
-    response = search_api.search(keyword, limit=5)
+def test_search_is_case_insensitive(search_api: SearchApi, keyword: str) -> None:
+    lower_response = search_api.search(keyword.lower())
+    upper_response = search_api.search(keyword.upper())
+    original_response = search_api.search(keyword)
 
-    assert response.status_code == 200, "Неожиданный статус-код"
+    assert lower_response.status_code == 200, "Неожиданный статус-код"
+    assert upper_response.status_code == 200, "Неожиданный статус-код"
+    assert original_response.status_code == 200, "Неожиданный статус-код"
 
-    result = ObjectList.model_validate(response.json())
+    lower = ObjectList.model_validate(lower_response.json())
+    upper = ObjectList.model_validate(upper_response.json())
+    original = ObjectList.model_validate(original_response.json())
 
-    assert result.object_ids, f"Поиск по '{keyword}' не вернул результатов"
+    assert lower.object_ids, f"Поиск '{keyword.lower()}' не вернул результатов"
+    assert upper.object_ids, f"Поиск '{keyword.upper()}' не вернул результатов"
+    assert original.object_ids, f"Поиск '{keyword}' не вернул результатов"
 
-    for object_id in result.object_ids:
-        object_response = objects_api.get_object(object_id)
-        assert object_response.status_code == 200, f"Неожиданный статус-код при получении объекта {object_id}"
-        artwork = Artwork.model_validate(object_response.json())
-        object_data = artwork.model_dump(exclude_none=True)
-        searchable_text = " ".join(
-            str(value).lower()
-            for value in object_data.values()
-        )
-        assert keyword.lower() in searchable_text, f"Объект {object_id} не содержит '{keyword}' в своих данных"
+    ids_lower = set(lower.object_ids)
+    ids_upper = set(upper.object_ids)
+    ids_original = set(original.object_ids)
 
+    assert ids_lower == ids_upper == ids_original, f"Регистр влияет на результат для '{keyword}'"
 
 @pytest.mark.parametrize(
     "keyword",
