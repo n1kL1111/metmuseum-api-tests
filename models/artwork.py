@@ -1,44 +1,91 @@
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class Constituent(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    constituent_id: int = Field(alias="constituentID")
+    role: str = ""
+    name: str = ""
+    constituent_ulan_url: str = Field("", alias="constituentULAN_URL")
+    constituent_wikidata_url: str = Field("", alias="constituentWikidata_URL")
+    gender: str = ""
+
+
+class Measurement(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    element_name: str = Field(alias="elementName")
+    element_description: str | None = Field(None, alias="elementDescription")
+    element_measurements: dict[str, float] = Field(
+        default_factory=dict, alias="elementMeasurements"
+    )
+
+
+class Tag(BaseModel):
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    term: str
+    aat_url: str = Field("", alias="AAT_URL")
+    wikidata_url: str = Field("", alias="Wikidata_URL")
 
 
 class Artwork(BaseModel):
-    model_config = ConfigDict(
-        extra="ignore",
-        populate_by_name=True,
-    )
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    # --- Гарантированно есть ---
     object_id: int = Field(alias="objectID")
     is_highlight: bool = Field(alias="isHighlight")
     is_public_domain: bool = Field(alias="isPublicDomain")
 
-    # --- Могут быть пустыми строками / null ---
-    title: str | None = None
-    department: str | None = None
-    object_name: str | None = Field(None, alias="objectName")
+    title: str = ""
+    department: str = ""
+    object_name: str = Field("", alias="objectName")
 
-    culture: str | None = None
-    period: str | None = None
-    dynasty: str | None = None
-    reign: str | None = None
-    portfolio: str | None = None
+    culture: str = ""
+    period: str = ""
+    dynasty: str = ""
+    reign: str = ""
+    portfolio: str = ""
 
-    artist_role: str | None = Field(None, alias="artistRole")
-    artist_display_name: str | None = Field(None, alias="artistDisplayName")
-    artist_display_bio: str | None = Field(None, alias="artistDisplayBio")
-    artist_nationality: str | None = Field(None, alias="artistNationality")
+    artist_role: str = Field("", alias="artistRole")
+    artist_display_name: str = Field("", alias="artistDisplayName")
+    artist_display_bio: str = Field("", alias="artistDisplayBio")
+    artist_nationality: str = Field("", alias="artistNationality")
+    artist_begin_date: str = Field("", alias="artistBeginDate")
+    artist_end_date: str = Field("", alias="artistEndDate")
 
-    object_date: str | None = Field(None, alias="objectDate")
-    object_begin_date: int | None = Field(None, alias="objectBeginDate")
-    object_end_date: int | None = Field(None, alias="objectEndDate")
+    object_date: str = Field("", alias="objectDate")
+    object_begin_date: int = Field(alias="objectBeginDate")
+    object_end_date: int = Field(alias="objectEndDate")
 
-    medium: str | None = None
-    dimensions: str | None = None
-    classification: str | None = None
+    medium: str = ""
+    dimensions: str = ""
+    classification: str = ""
 
-    primary_image: str | None = Field(None, alias="primaryImage")
-    primary_image_small: str | None = Field(None, alias="primaryImageSmall")
-    additional_images: list[str] | None = Field(None, alias="additionalImages")
-    object_url: str | None = Field(None, alias="objectURL")
+    primary_image: str = Field("", alias="primaryImage")
+    primary_image_small: str = Field("", alias="primaryImageSmall")
+    object_url: str = Field("", alias="objectURL")
 
-    metadata_date: str | None = Field(None, alias="metadataDate")
+    credit_line: str = Field("", alias="creditLine")
+    repository: str = ""
+    gallery_number: str = Field("", alias="GalleryNumber")
+
+    metadata_date: datetime = Field(alias="metadataDate")
+
+    additional_images: list[str] = Field(default_factory=list, alias="additionalImages")
+    constituents: list[Constituent] = Field(default_factory=list)
+    measurements: list[Measurement] = Field(default_factory=list)
+    tags: list[Tag] = Field(default_factory=list)
+
+    @field_validator(
+        "additional_images",
+        "constituents",
+        "measurements",
+        "tags",
+        mode="before",
+    )
+    @classmethod
+    def _none_to_empty_list(cls, value):
+        return [] if value is None else value
